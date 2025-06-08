@@ -12,15 +12,15 @@
       position: relative;
       width: 600px;
       height: 600px;
-      background-image: url('クリケットグランド.jpg'); /* 画像ファイル名 */
+      background-image: url('クリケットグランド.jpg');
       background-size: cover;
       border: 2px solid #000;
       margin: 0 auto;
     }
     .dot {
-      width: 20px;
-      height: 20px;
-      background-color: red;
+      width: 30px;
+      height: 30px;
+      background-color: blue;
       border-radius: 50%;
       position: absolute;
       cursor: grab;
@@ -33,26 +33,50 @@
 
   <script>
     const container = document.getElementById('container');
+    const dotCount = 9;
+    const containerSize = 600;
+    const radius = 200; // 円の半径
+    const centerX = containerSize / 2;
+    const centerY = containerSize / 2;
+    const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
 
-    // 9個の点を生成
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < dotCount; i++) {
       const dot = document.createElement('div');
       dot.className = 'dot';
-      dot.style.left = `${50 + i * 20}px`;  // 初期位置（ずらして重ならないように）
-      dot.style.top = `${50 + i * 20}px`;
+      dot.dataset.index = i;
+
+      if (savedPositions[i]) {
+        dot.style.left = `${savedPositions[i].x}px`;
+        dot.style.top = `${savedPositions[i].y}px`;
+      } else {
+        // 円形に配置
+        const angle = (i / dotCount) * 2 * Math.PI;
+        const x = centerX + radius * Math.cos(angle) - 15; // 15 = dot width/2
+        const y = centerY + radius * Math.sin(angle) - 15;
+        dot.style.left = `${x}px`;
+        dot.style.top = `${y}px`;
+      }
+
       container.appendChild(dot);
 
-      // ドラッグ機能を追加
       dot.onmousedown = function (e) {
         const offsetX = e.clientX - dot.offsetLeft;
         const offsetY = e.clientY - dot.offsetTop;
 
         function onMouseMove(e) {
-          dot.style.left = `${e.clientX - offsetX}px`;
-          dot.style.top = `${e.clientY - offsetY}px`;
+          let newX = e.clientX - offsetX;
+          let newY = e.clientY - offsetY;
+
+          // コンテナ内に制限
+          newX = Math.max(0, Math.min(container.offsetWidth - 30, newX));
+          newY = Math.max(0, Math.min(container.offsetHeight - 30, newY));
+
+          dot.style.left = `${newX}px`;
+          dot.style.top = `${newY}px`;
         }
 
         function onMouseUp() {
+          savePositions();
           document.removeEventListener('mousemove', onMouseMove);
           document.removeEventListener('mouseup', onMouseUp);
         }
@@ -60,6 +84,14 @@
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
       };
+    }
+
+    function savePositions() {
+      const positions = Array.from(document.querySelectorAll('.dot')).map(dot => ({
+        x: parseFloat(dot.style.left),
+        y: parseFloat(dot.style.top)
+      }));
+      localStorage.setItem('dotPositions', JSON.stringify(positions));
     }
   </script>
 </body>
