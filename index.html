@@ -1,73 +1,66 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>Cricket Ground Visualizer</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: auto; /* 縦スクロール可に */
-        }
-        .container {
-            position: relative;
-            width: 1000px;
-            height: 1000px;
-            background-image: url('cricket-ground.jpg');
-            background-size: contain; /* 画像全体を表示 */
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-        .point {
-            width: 10px;
-            height: 10px;
-            background-color: red;
-            border-radius: 50%;
-            position: absolute;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>点を動かせるプログラム</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #container {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      background-image: url('クリケットグランド.jpg'); /* 画像ファイル名 */
+      background-size: cover;
+      border: 2px solid #000;
+      margin: 0 auto;
+    }
+    .dot {
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      border-radius: 50%;
+      position: absolute;
+      cursor: grab;
+      user-select: none;
+    }
+  </style>
 </head>
 <body>
-    <div class="container" id="container">
-        <div class="point" style="left: 300px; top: 310px;"></div>
-        <div class="point" style="left: 210px; top: 130px;"></div>
-        <div class="point" style="left: 490px; top: 100px;"></div>
-        <div class="point" style="left: 770px; top: 130px;"></div>
-        <div class="point" style="left: 880px; top: 310px;"></div>
-        <div class="point" style="left: 770px; top: 700px;"></div>
-        <div class="point" style="left: 550px; top: 820px;"></div>
-        <div class="point" style="left: 300px; top: 750px;"></div>
-        <div class="point" style="left: 200px; top: 500px;"></div>
-    </div>
+  <div id="container"></div>
 
-    <script>
-        document.querySelectorAll('.point').forEach(point => {
-            point.onmousedown = function(event) {
-                const shiftX = event.clientX - point.getBoundingClientRect().left;
-                const shiftY = event.clientY - point.getBoundingClientRect().top;
+  <script>
+    const container = document.getElementById('container');
 
-                function moveAt(pageX, pageY) {
-                    point.style.left = pageX - shiftX - container.getBoundingClientRect().left + 'px';
-                    point.style.top = pageY - shiftY - container.getBoundingClientRect().top + 'px';
-                }
+    // 9個の点を生成
+    for (let i = 0; i < 9; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.style.left = `${50 + i * 20}px`;  // 初期位置（ずらして重ならないように）
+      dot.style.top = `${50 + i * 20}px`;
+      container.appendChild(dot);
 
-                function onMouseMove(event) {
-                    moveAt(event.pageX, event.pageY);
-                }
+      // ドラッグ機能を追加
+      dot.onmousedown = function (e) {
+        const offsetX = e.clientX - dot.offsetLeft;
+        const offsetY = e.clientY - dot.offsetTop;
 
-                document.addEventListener('mousemove', onMouseMove);
+        function onMouseMove(e) {
+          dot.style.left = `${e.clientX - offsetX}px`;
+          dot.style.top = `${e.clientY - offsetY}px`;
+        }
 
-                document.onmouseup = function() {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.onmouseup = null;
-                };
-            };
+        function onMouseUp() {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        }
 
-            point.ondragstart = function() {
-                return false;
-            };
-        });
-    </script>
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      };
+    }
+  </script>
 </body>
 </html>
