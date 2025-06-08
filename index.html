@@ -13,10 +13,9 @@
       position: relative;
       width: 600px;
       height: 600px;
-      background-image: url('cricket-ground.jpg');
-      background-size: cover;
       border: 2px solid #000;
-      margin: 0 auto;
+      margin: 20px auto;
+      background-image: url('cricket-gruound.jpg');
     }
     #background-img {
       width: 100%;
@@ -38,6 +37,10 @@
     }
     .special-dot {
       background-color: orange;
+      cursor: default;
+    }
+    .corner-dot {
+      background-color: red;
       cursor: default;
     }
     .hidden {
@@ -68,7 +71,7 @@
     const centerY = containerSize / 2;
     const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
 
-    // 通常の点を円形に配置
+    // 通常のドラッグ可能な点（円形配置）
     for (let i = 0; i < dotCount; i++) {
       const dot = document.createElement('div');
       dot.className = 'dot';
@@ -112,21 +115,43 @@
       };
     }
 
-    // 特別な点：上部と下部（初期は上部を表示）
+    // 特別点：上部（20px上にオフセット）
     const topDot = document.createElement('div');
     topDot.className = 'dot special-dot';
     topDot.style.left = `${centerX - 15}px`;
-    topDot.style.top = `${centerY - 100 - 15}px`;
+    topDot.style.top = `${centerY - 100 - 15 - 20}px`;
 
+    // 特別点：下部（20px下にオフセット）
     const bottomDot = document.createElement('div');
-    bottomDot.className = 'dot special-dot hidden'; // 初期は非表示
+    bottomDot.className = 'dot special-dot hidden';
     bottomDot.style.left = `${centerX - 15}px`;
-    bottomDot.style.top = `${centerY + 100 - 15}px`;
+    bottomDot.style.top = `${centerY + 100 - 15 + 20}px`;
 
     container.appendChild(topDot);
     container.appendChild(bottomDot);
 
-    // ボタンによる切り替え
+    // 長方形（想定：中央に幅200px × 高さ100px）の内側頂点に点を追加
+    const rectWidth = 200;
+    const rectHeight = 100;
+    const rectLeft = centerX - rectWidth / 2;
+    const rectTop = centerY - rectHeight / 2;
+
+    const cornerOffsets = [
+      { dx: 5, dy: 5 },                                   // 左上
+      { dx: rectWidth - 35, dy: 5 },                      // 右上
+      { dx: 5, dy: rectHeight - 35 },                     // 左下
+      { dx: rectWidth - 35, dy: rectHeight - 35 }         // 右下
+    ];
+
+    for (const offset of cornerOffsets) {
+      const cornerDot = document.createElement('div');
+      cornerDot.className = 'dot corner-dot';
+      cornerDot.style.left = `${rectLeft + offset.dx}px`;
+      cornerDot.style.top = `${rectTop + offset.dy}px`;
+      container.appendChild(cornerDot);
+    }
+
+    // 上下切り替えボタン処理
     const toggleBtn = document.getElementById('toggleBtn');
     toggleBtn.onclick = () => {
       const topVisible = !topDot.classList.contains('hidden');
@@ -144,7 +169,7 @@
 
     function savePositions() {
       const positions = Array.from(document.querySelectorAll('.dot'))
-        .filter(dot => !dot.classList.contains('special-dot'))
+        .filter(dot => !dot.classList.contains('special-dot') && !dot.classList.contains('corner-dot'))
         .map(dot => ({
           x: parseFloat(dot.style.left),
           y: parseFloat(dot.style.top)
