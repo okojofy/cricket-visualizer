@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cricket Visualizer</title>
+  <style>
+    body {
+      margin: 0;
+      background-image: url('cricket-ground.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      height: 100vh;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      background: red;
+      border-radius: 50%;
+      position: absolute;
+      cursor: move;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    let selectedDot = null;
+    for (let i = 0; i < 9; i++) {
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      dot.style.left = (50 + i * 20) + "px";
+      dot.style.top = (200 + i * 20) + "px";
+      document.body.appendChild(dot);
+
+      dot.onmousedown = function (e) {
+        selectedDot = dot;
+      };
+    }
+
+    document.onmousemove = function (e) {
+      if (selectedDot) {
+        selectedDot.style.left = e.pageX - 6 + "px";
+        selectedDot.style.top = e.pageY - 6 + "px";
+      }
+    };
+
+    document.onmouseup = function () {
+      selectedDot = null;
+    };
+  </script>
+</body>
+</html>
