@@ -7,13 +7,18 @@
         body {
             margin: 0;
             padding: 0;
+            overflow: auto;
         }
         .container {
             position: relative;
-            width: 977px;
-            height: 886px;
+            width: 100vw;
+            max-width: 1000px;
+            aspect-ratio: 1 / 1;
             background-image: url('cricket-ground.jpg');
-            background-size: cover;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 0 auto;
         }
         .point {
             width: 10px;
