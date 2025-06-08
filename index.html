@@ -1,52 +1,70 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>Cricket Visualizer</title>
-  <style>
-    body {
-      margin: 0;
-      background-image: url('cricket-ground.jpg');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      height: 100vh;
-    }
-    .dot {
-      width: 12px;
-      height: 12px;
-      background: red;
-      border-radius: 50%;
-      position: absolute;
-      cursor: move;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Cricket Ground Visualizer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            position: relative;
+            width: 977px;
+            height: 886px;
+            background-image: url('cricket-ground.jpg');
+            background-size: cover;
+        }
+        .point {
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <script>
-    let selectedDot = null;
-    for (let i = 0; i < 9; i++) {
-      const dot = document.createElement("div");
-      dot.className = "dot";
-      dot.style.left = (50 + i * 20) + "px";
-      dot.style.top = (200 + i * 20) + "px";
-      document.body.appendChild(dot);
+    <div class="container" id="container">
+        <div class="point" style="left: 300px; top: 310px;"></div>
+        <div class="point" style="left: 210px; top: 130px;"></div>
+        <div class="point" style="left: 490px; top: 100px;"></div>
+        <div class="point" style="left: 770px; top: 130px;"></div>
+        <div class="point" style="left: 880px; top: 310px;"></div>
+        <div class="point" style="left: 770px; top: 700px;"></div>
+        <div class="point" style="left: 550px; top: 820px;"></div>
+        <div class="point" style="left: 300px; top: 750px;"></div>
+        <div class="point" style="left: 200px; top: 500px;"></div>
+    </div>
 
-      dot.onmousedown = function (e) {
-        selectedDot = dot;
-      };
-    }
+    <script>
+        document.querySelectorAll('.point').forEach(point => {
+            point.onmousedown = function(event) {
+                const shiftX = event.clientX - point.getBoundingClientRect().left;
+                const shiftY = event.clientY - point.getBoundingClientRect().top;
 
-    document.onmousemove = function (e) {
-      if (selectedDot) {
-        selectedDot.style.left = e.pageX - 6 + "px";
-        selectedDot.style.top = e.pageY - 6 + "px";
-      }
-    };
+                function moveAt(pageX, pageY) {
+                    point.style.left = pageX - shiftX - container.getBoundingClientRect().left + 'px';
+                    point.style.top = pageY - shiftY - container.getBoundingClientRect().top + 'px';
+                }
 
-    document.onmouseup = function () {
-      selectedDot = null;
-    };
-  </script>
+                function onMouseMove(event) {
+                    moveAt(event.pageX, event.pageY);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+
+                document.onmouseup = function() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.onmouseup = null;
+                };
+            };
+
+            point.ondragstart = function() {
+                return false;
+            };
+        });
+    </script>
 </body>
 </html>
