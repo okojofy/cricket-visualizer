@@ -7,18 +7,16 @@
         body {
             margin: 0;
             padding: 0;
-            overflow: auto;
+            overflow: auto; /* 縦スクロール可に */
         }
         .container {
             position: relative;
-            width: 100vw;
-            max-width: 1000px;
-            aspect-ratio: 1 / 1;
+            width: 1000px;
+            height: 1000px;
             background-image: url('cricket-ground.jpg');
-            background-size: contain;
+            background-size: contain; /* 画像全体を表示 */
             background-repeat: no-repeat;
             background-position: center;
-            margin: 0 auto;
         }
         .point {
             width: 10px;
