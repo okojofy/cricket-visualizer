@@ -7,23 +7,15 @@
     body {
       margin: 0;
       padding: 0;
-      text-align: center;
     }
     #container {
       position: relative;
       width: 600px;
       height: 600px;
+      background-image: url('cricket-ground.jpg'); /* 画像ファイル名 */
+      background-size: cover;
       border: 2px solid #000;
-      margin: 20px auto;
-      background-image: url('cricket-gruound.jpg');
-    }
-    #background-img {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 0;
+      margin: 0 auto;
     }
     .dot {
       width: 30px;
@@ -33,34 +25,11 @@
       position: absolute;
       cursor: grab;
       user-select: none;
-      z-index: 10;
-    }
-    .special-dot {
-      background-color: orange;
-      cursor: default;
-    }
-    .corner-dot {
-      background-color: red;
-      cursor: default;
-    }
-    .hidden {
-      display: none;
-    }
-    #toggleBtn {
-      margin-top: 10px;
-      padding: 8px 16px;
-      font-size: 16px;
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
-
-  <div id="container">
-    <img id="background-img" src="ground.jpg" alt="背景画像が読み込めません">
-  </div>
-
-  <button id="toggleBtn">下部の点を表示</button>
+  <div id="container"></div>
 
   <script>
     const container = document.getElementById('container');
@@ -69,28 +38,50 @@
     const radius = 200;
     const centerX = containerSize / 2;
     const centerY = containerSize / 2;
-    const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
 
-    // 通常のドラッグ可能な点（円形配置）
+    const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
+    const allDots = [];
+
+    // 9個の円周上の点を作成
     for (let i = 0; i < dotCount; i++) {
       const dot = document.createElement('div');
       dot.className = 'dot';
       dot.dataset.index = i;
 
-      let x, y;
       if (savedPositions[i]) {
-        x = savedPositions[i].x;
-        y = savedPositions[i].y;
+        dot.style.left = `${savedPositions[i].x}px`;
+        dot.style.top = `${savedPositions[i].y}px`;
       } else {
         const angle = (i / dotCount) * 2 * Math.PI;
-        x = centerX + radius * Math.cos(angle) - 15;
-        y = centerY + radius * Math.sin(angle) - 15;
+        const x = centerX + radius * Math.cos(angle) - 15;
+        const y = centerY + radius * Math.sin(angle) - 15;
+        dot.style.left = `${x}px`;
+        dot.style.top = `${y}px`;
       }
 
-      dot.style.left = `${x}px`;
-      dot.style.top = `${y}px`;
+      makeDraggable(dot);
       container.appendChild(dot);
+      allDots.push(dot);
+    }
 
+    // 長方形下部の追加点（インデックス: 9番目）
+    const extraDot = document.createElement('div');
+    extraDot.className = 'dot';
+
+    if (savedPositions[9]) {
+      extraDot.style.left = `${savedPositions[9].x}px`;
+      extraDot.style.top = `${savedPositions[9].y}px`;
+    } else {
+      extraDot.style.left = `${300 - 15}px`; // X中央
+      extraDot.style.top = `${375 - 15}px`;  // Y下端
+    }
+
+    makeDraggable(extraDot);
+    container.appendChild(extraDot);
+    allDots.push(extraDot);
+
+    // ドラッグ機能付与
+    function makeDraggable(dot) {
       dot.onmousedown = function (e) {
         const offsetX = e.clientX - dot.offsetLeft;
         const offsetY = e.clientY - dot.offsetTop;
@@ -98,8 +89,10 @@
         function onMouseMove(e) {
           let newX = e.clientX - offsetX;
           let newY = e.clientY - offsetY;
+
           newX = Math.max(0, Math.min(container.offsetWidth - 30, newX));
           newY = Math.max(0, Math.min(container.offsetHeight - 30, newY));
+
           dot.style.left = `${newX}px`;
           dot.style.top = `${newY}px`;
         }
@@ -115,65 +108,12 @@
       };
     }
 
-    // 特別点：上部（20px上にオフセット）
-    const topDot = document.createElement('div');
-    topDot.className = 'dot special-dot';
-    topDot.style.left = `${centerX - 15}px`;
-    topDot.style.top = `${centerY - 100 - 15 - 20}px`;
-
-    // 特別点：下部（20px下にオフセット）
-    const bottomDot = document.createElement('div');
-    bottomDot.className = 'dot special-dot hidden';
-    bottomDot.style.left = `${centerX - 15}px`;
-    bottomDot.style.top = `${centerY + 100 - 15 + 20}px`;
-
-    container.appendChild(topDot);
-    container.appendChild(bottomDot);
-
-    // 長方形（想定：中央に幅200px × 高さ100px）の内側頂点に点を追加
-    const rectWidth = 200;
-    const rectHeight = 100;
-    const rectLeft = centerX - rectWidth / 2;
-    const rectTop = centerY - rectHeight / 2;
-
-    const cornerOffsets = [
-      { dx: 5, dy: 5 },                                   // 左上
-      { dx: rectWidth - 35, dy: 5 },                      // 右上
-      { dx: 5, dy: rectHeight - 35 },                     // 左下
-      { dx: rectWidth - 35, dy: rectHeight - 35 }         // 右下
-    ];
-
-    for (const offset of cornerOffsets) {
-      const cornerDot = document.createElement('div');
-      cornerDot.className = 'dot corner-dot';
-      cornerDot.style.left = `${rectLeft + offset.dx}px`;
-      cornerDot.style.top = `${rectTop + offset.dy}px`;
-      container.appendChild(cornerDot);
-    }
-
-    // 上下切り替えボタン処理
-    const toggleBtn = document.getElementById('toggleBtn');
-    toggleBtn.onclick = () => {
-      const topVisible = !topDot.classList.contains('hidden');
-
-      if (topVisible) {
-        topDot.classList.add('hidden');
-        bottomDot.classList.remove('hidden');
-        toggleBtn.textContent = '上部の点を表示';
-      } else {
-        topDot.classList.remove('hidden');
-        bottomDot.classList.add('hidden');
-        toggleBtn.textContent = '下部の点を表示';
-      }
-    };
-
+    // 座標保存
     function savePositions() {
-      const positions = Array.from(document.querySelectorAll('.dot'))
-        .filter(dot => !dot.classList.contains('special-dot') && !dot.classList.contains('corner-dot'))
-        .map(dot => ({
-          x: parseFloat(dot.style.left),
-          y: parseFloat(dot.style.top)
-        }));
+      const positions = allDots.map(dot => ({
+        x: parseFloat(dot.style.left),
+        y: parseFloat(dot.style.top)
+      }));
       localStorage.setItem('dotPositions', JSON.stringify(positions));
     }
   </script>
