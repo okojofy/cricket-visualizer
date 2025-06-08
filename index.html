@@ -12,19 +12,22 @@
       position: relative;
       width: 600px;
       height: 600px;
-      background-image: url('cricket-ground.jpg');
+      background-image: url('./ground.jpg'); /* ファイル名注意 */
       background-size: cover;
       border: 2px solid #000;
       margin: 0 auto;
     }
     .dot {
-      width: 25px;
-      height: 25px;
+      width: 30px;
+      height: 30px;
       background-color: blue;
       border-radius: 50%;
       position: absolute;
       cursor: grab;
       user-select: none;
+    }
+    .special-dot {
+      background-color: orange; /* 特別な点の色 */
     }
   </style>
 </head>
@@ -35,28 +38,18 @@
     const container = document.getElementById('container');
     const dotCount = 9;
     const containerSize = 600;
-    const radius = 200; // 円の半径
+    const radius = 200;
     const centerX = containerSize / 2;
     const centerY = containerSize / 2;
     const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
 
-    for (let i = 0; i < dotCount; i++) {
+    function createDot(index, x, y, isSpecial = false) {
       const dot = document.createElement('div');
       dot.className = 'dot';
-      dot.dataset.index = i;
-
-      if (savedPositions[i]) {
-        dot.style.left = `${savedPositions[i].x}px`;
-        dot.style.top = `${savedPositions[i].y}px`;
-      } else {
-        // 円形に配置
-        const angle = (i / dotCount) * 2 * Math.PI;
-        const x = centerX + radius * Math.cos(angle) - 15; // 15 = dot width/2
-        const y = centerY + radius * Math.sin(angle) - 15;
-        dot.style.left = `${x}px`;
-        dot.style.top = `${y}px`;
-      }
-
+      if (isSpecial) dot.classList.add('special-dot');
+      dot.dataset.index = index;
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
       container.appendChild(dot);
 
       dot.onmousedown = function (e) {
@@ -66,11 +59,8 @@
         function onMouseMove(e) {
           let newX = e.clientX - offsetX;
           let newY = e.clientY - offsetY;
-
-          // コンテナ内に制限
           newX = Math.max(0, Math.min(container.offsetWidth - 30, newX));
           newY = Math.max(0, Math.min(container.offsetHeight - 30, newY));
-
           dot.style.left = `${newX}px`;
           dot.style.top = `${newY}px`;
         }
@@ -85,6 +75,29 @@
         document.addEventListener('mouseup', onMouseUp);
       };
     }
+
+    // 点を円形に配置
+    for (let i = 0; i < dotCount; i++) {
+      let x, y;
+      if (savedPositions[i]) {
+        x = savedPositions[i].x;
+        y = savedPositions[i].y;
+      } else {
+        const angle = (i / dotCount) * 2 * Math.PI;
+        x = centerX + radius * Math.cos(angle) - 15;
+        y = centerY + radius * Math.sin(angle) - 15;
+      }
+      createDot(i, x, y);
+    }
+
+    // 特別な点（長方形の上中央に追加）
+    let specialX = centerX - 15; // 長方形の中心に合わせて
+    let specialY = centerY - 100 - 15; // 長方形の上端と想定して少し上に
+    if (savedPositions[9]) {
+      specialX = savedPositions[9].x;
+      specialY = savedPositions[9].y;
+    }
+    createDot(9, specialX, specialY, true);
 
     function savePositions() {
       const positions = Array.from(document.querySelectorAll('.dot')).map(dot => ({
