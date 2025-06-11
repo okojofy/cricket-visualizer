@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>インタラクティブ配置ツール</title>
+  <title>守備配置</title>
   <style>
     body {
       margin: 0;
@@ -14,34 +14,44 @@
       align-items: center;
     }
     header {
-      padding: 20px;
+      padding: 10px;
       text-align: center;
+      width: 100%;
     }
-    #controls {
-      margin-bottom: 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
+    #top-controls {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #bottom-controls {
+      margin-top: 20px;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
     }
     button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 12px 28px;
+      font-size: 16px;
+      background: linear-gradient(135deg, #6c63ff, #3faffa);
       color: white;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border: none;
+      border-radius: 25px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
       transition: all 0.3s ease;
+      cursor: pointer;
     }
     button:hover {
+      background: linear-gradient(135deg, #3faffa, #6c63ff);
       transform: translateY(-2px);
-      background: linear-gradient(135deg, #5a67d8, #6b46c1);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     }
     #container {
       width: 600px;
       height: 600px;
       position: relative;
+      margin: 80px auto 60px;
       border-radius: 12px;
       background-size: cover;
       background-position: center;
@@ -54,19 +64,14 @@
       border-radius: 50%;
       position: absolute;
       user-select: none;
-      text-align: center;
-      line-height: 30px;
-      font-weight: bold;
-      font-size: 14px;
     }
     .movable-dot {
       background-color: #3b82f6;
-      color: white;
       cursor: grab;
     }
     .fixed-dot {
-      background-color: #ef4444;
-      color: white;
+      background-color: #3b82f6;
+      cursor: default;
     }
     #info {
       margin-top: 15px;
@@ -77,16 +82,18 @@
 <body>
 
 <header>
-  <h1>インタラクティブ配置ツール</h1>
+  <div id="top-controls">
+    <button onclick="toggleImage()">背景画像切り替え</button>
+  </div>
 </header>
 
-<div id="controls">
-  <button onclick="toggleImage()">背景画像切り替え</button>
+<div id="container"></div>
+
+<div id="bottom-controls">
   <button onclick="resetDots()">初期化</button>
 </div>
 
-<div id="container"></div>
-<div id="info">ドットをドラッグして移動できます。中央赤ドットは固定です。</div>
+<div id="info">ドットをドラッグして移動できます。中央のドットは固定されています。</div>
 
 <script>
   const container = document.getElementById('container');
@@ -107,7 +114,6 @@
   function createMovableDot(x, y, index) {
     const dot = document.createElement('div');
     dot.className = 'dot movable-dot';
-    dot.innerText = index + 1;
     dot.style.left = `${x}px`;
     dot.style.top = `${y}px`;
     dot.dataset.index = index;
@@ -142,7 +148,6 @@
   function createFixedDot(x, y) {
     const dot = document.createElement('div');
     dot.className = 'dot fixed-dot';
-    dot.innerText = 'C';
     dot.style.left = `${x}px`;
     dot.style.top = `${y}px`;
     container.appendChild(dot);
@@ -171,7 +176,7 @@
       const pos = saved[i] || { x, y };
       createMovableDot(pos.x, pos.y, i);
     }
-    createFixedDot(centerX - 15, 415 - 15);
+    createFixedDot(centerX - 15, 435 - 15); // 415 + 20 = 435
   }
 
   function resetDots() {
