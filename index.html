@@ -43,7 +43,9 @@
   <script>
     const container = document.getElementById('container');
     const images = ['cricket-ground.jpg', 'baller-top.jpg'];
-    let currentImageIndex = 0;
+
+    // localStorage から画像インデックスを取得（なければ 0）
+    let currentImageIndex = parseInt(localStorage.getItem('currentImageIndex')) || 0;
 
     const dotCount = 9;
     const containerSize = 600;
@@ -57,10 +59,11 @@
     function toggleImage() {
       currentImageIndex = (currentImageIndex + 1) % images.length;
       container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+      localStorage.setItem('currentImageIndex', currentImageIndex);  // 保存
     }
 
     // 背景初期化
-    container.style.backgroundImage = `url('${images[0]}')`;
+    container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
 
     // 位置復元
     const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
@@ -118,29 +121,8 @@
         createDot(x, y, i);
       }
 
-      // 追加の中央下部ドット（インデックス: 9）
+      // 中央下部の点（インデックス: 9）
       let extraX = 300 - 15;
-      let extraY = 395 - 15; // 20px 下へオフセット
+      let extraY = 395 - 15;
 
-      if (savedPositions[9]) {
-        extraX = savedPositions[9].x;
-        extraY = savedPositions[9].y;
-      }
-
-      createDot(extraX, extraY, 9);
-    }
-
-    function savePositions() {
-      const positions = allDots.map(dot => ({
-        x: parseFloat(dot.style.left),
-        y: parseFloat(dot.style.top)
-      }));
-      localStorage.setItem('dotPositions', JSON.stringify(positions));
-    }
-
-    // 初期化
-    initDots();
-  </script>
-
-</body>
-</html>
+      if (savedPositions[9])
