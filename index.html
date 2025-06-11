@@ -44,8 +44,22 @@
     const container = document.getElementById('container');
     const images = ['cricket-ground.jpg', 'baller-top.jpg'];
 
-    // localStorage から画像インデックスを取得（なければ 0）
-    let currentImageIndex = parseInt(localStorage.getItem('currentImageIndex')) || 0;
+    // ✅ 画像インデックスを localStorage から取得（なければ0）
+    let currentImageIndex = parseInt(localStorage.getItem('currentImageIndex') || '0');
+
+    // ✅ 背景画像を初期化（インデックスに基づく）
+    function setImageByIndex(index) {
+      container.style.backgroundImage = `url('${images[index]}')`;
+    }
+
+    setImageByIndex(currentImageIndex);
+
+    // 🔁 画像切り替えボタン押下時の処理
+    function toggleImage() {
+      currentImageIndex = (currentImageIndex + 1) % images.length;
+      setImageByIndex(currentImageIndex);
+      localStorage.setItem('currentImageIndex', currentImageIndex);
+    }
 
     const dotCount = 9;
     const containerSize = 600;
@@ -55,74 +69,15 @@
 
     let allDots = [];
 
-    // 画像切り替え処理
-    function toggleImage() {
-      currentImageIndex = (currentImageIndex + 1) % images.length;
-      container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
-      localStorage.setItem('currentImageIndex', currentImageIndex);  // 保存
-    }
+    // ✅ ドット位置を localStorage から取得（インデックスに基づくキーで分離）
+    const savedPositions = JSON.parse(localStorage.getItem(`dotPositions_${currentImageIndex}`) || '[]');
 
-    // 背景初期化
-    container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
-
-    // 位置復元
-    const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
-
-    // ドラッグ可能な点を作成
     function createDot(x, y, index) {
       const dot = document.createElement('div');
       dot.className = 'dot';
       dot.dataset.index = index;
-
       dot.style.left = `${x}px`;
       dot.style.top = `${y}px`;
 
       dot.onmousedown = function (e) {
-        const offsetX = e.clientX - dot.offsetLeft;
-        const offsetY = e.clientY - dot.offsetTop;
-
-        function onMouseMove(e) {
-          let newX = e.clientX - offsetX;
-          let newY = e.clientY - offsetY;
-
-          newX = Math.max(0, Math.min(container.offsetWidth - 30, newX));
-          newY = Math.max(0, Math.min(container.offsetHeight - 30, newY));
-
-          dot.style.left = `${newX}px`;
-          dot.style.top = `${newY}px`;
-        }
-
-        function onMouseUp() {
-          savePositions();
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-      };
-
-      container.appendChild(dot);
-      allDots.push(dot);
-    }
-
-    // ドット初期化
-    function initDots() {
-      for (let i = 0; i < dotCount; i++) {
-        let x, y;
-        if (savedPositions[i]) {
-          x = savedPositions[i].x;
-          y = savedPositions[i].y;
-        } else {
-          const angle = (i / dotCount) * 2 * Math.PI;
-          x = centerX + radius * Math.cos(angle) - 15;
-          y = centerY + radius * Math.sin(angle) - 15;
-        }
-        createDot(x, y, i);
-      }
-
-      // 中央下部の点（インデックス: 9）
-      let extraX = 300 - 15;
-      let extraY = 395 - 15;
-
-      if (savedPositions[9])
+        const offsetX = e.clientX
