@@ -122,4 +122,21 @@
       // 固定ドット（中央下部：常に同じ位置）
       const fixedX = 300 - 15;
       const fixedY = 395 - 15;
-      createDot(fixedX, fixedY, dotCount, true); // in
+      createDot(fixedX, fixedY, dotCount, true); // index 9, fixed=true
+    }
+
+    function savePositions() {
+      const movableDots = allDots.filter(dot => !dot.classList.contains('fixed'));
+      const positions = movableDots.map(dot => ({
+        x: parseFloat(dot.style.left),
+        y: parseFloat(dot.style.top)
+      }));
+      localStorage.setItem('dotPositions', JSON.stringify(positions));
+    }
+
+    // 初期化
+    initDots();
+  </script>
+
+</body>
+</html>
