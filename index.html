@@ -34,7 +34,7 @@
       cursor: grab;
     }
     .fixed-dot {
-      background-color: #007bff; /* 赤 */
+      background-color: #e63946; /* 赤 */
       cursor: default;
     }
     button {
@@ -65,4 +65,99 @@
     const images = ['cricket-ground.jpg', 'baller-top.jpg'];
 
     // 現在の画像インデックスを記録・復元
-    let
+    let currentImageIndex = parseInt(localStorage.getItem('selectedImage') || '0');
+    container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+
+    const dotCount = 9;
+    const containerSize = 600;
+    const radius = 200;
+    const centerX = containerSize / 2;
+    const centerY = containerSize / 2;
+    let allDots = [];
+
+    function toggleImage() {
+      currentImageIndex = (currentImageIndex + 1) % images.length;
+      container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+      localStorage.setItem('selectedImage', currentImageIndex.toString());
+    }
+
+    const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
+
+    function createMovableDot(x, y, index) {
+      const dot = document.createElement('div');
+      dot.className = 'dot movable-dot';
+      dot.dataset.index = index;
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
+
+      dot.onmousedown = function (e) {
+        const offsetX = e.clientX - dot.offsetLeft;
+        const offsetY = e.clientY - dot.offsetTop;
+
+        function onMouseMove(e) {
+          let newX = e.clientX - offsetX;
+          let newY = e.clientY - offsetY;
+
+          newX = Math.max(0, Math.min(container.offsetWidth - 30, newX));
+          newY = Math.max(0, Math.min(container.offsetHeight - 30, newY));
+
+          dot.style.left = `${newX}px`;
+          dot.style.top = `${newY}px`;
+        }
+
+        function onMouseUp() {
+          savePositions();
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      };
+
+      container.appendChild(dot);
+      allDots.push(dot);
+    }
+
+    function createFixedDot(x, y) {
+      const dot = document.createElement('div');
+      dot.className = 'dot fixed-dot';
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
+      container.appendChild(dot);
+    }
+
+    function initDots() {
+      for (let i = 0; i < dotCount; i++) {
+        let x, y;
+        if (savedPositions[i]) {
+          x = savedPositions[i].x;
+          y = savedPositions[i].y;
+        } else {
+          const angle = (i / dotCount) * 2 * Math.PI;
+          x = centerX + radius * Math.cos(angle) - 15;
+          y = centerY + radius * Math.sin(angle) - 15;
+        }
+        createMovableDot(x, y, i);
+      }
+
+      // 固定点（中央下部、20px下へ）
+      const fixedX = centerX - 15;
+      const fixedY = 415 - 15;
+      createFixedDot(fixedX, fixedY);
+    }
+
+    function savePositions() {
+      const positions = allDots.map(dot => ({
+        x: parseFloat(dot.style.left),
+        y: parseFloat(dot.style.top)
+      }));
+      localStorage.setItem('dotPositions', JSON.stringify(positions));
+    }
+
+    // 初期化
+    initDots();
+  </script>
+
+</body>
+</html>
