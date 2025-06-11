@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>画像切り替えとドット移動</title>
+  <title>画像切り替えと点配置</title>
   <style>
     body {
       margin: 0;
@@ -22,11 +22,17 @@
     .dot {
       width: 30px;
       height: 30px;
-      background-color: blue;
       border-radius: 50%;
       position: absolute;
       cursor: grab;
       user-select: none;
+    }
+    .movable-dot {
+      background-color: blue;
+    }
+    .fixed-dot {
+      background-color: red;
+      cursor: default;
     }
     button {
       margin-bottom: 20px;
@@ -43,34 +49,32 @@
   <script>
     const container = document.getElementById('container');
     const images = ['cricket-ground.jpg', 'baller-top.jpg'];
-    let currentImageIndex = 0;
+
+    // 前回使用された画像のインデックスを復元（デフォルトは0）
+    let currentImageIndex = parseInt(localStorage.getItem('selectedImage') || '0');
+    container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
 
     const dotCount = 9;
     const containerSize = 600;
     const radius = 200;
     const centerX = containerSize / 2;
     const centerY = containerSize / 2;
-
     let allDots = [];
 
-    // 画像切り替え処理
+    // 画像を切り替えてlocalStorageに保存
     function toggleImage() {
       currentImageIndex = (currentImageIndex + 1) % images.length;
       container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+      localStorage.setItem('selectedImage', currentImageIndex.toString());
     }
 
-    // 背景初期化
-    container.style.backgroundImage = `url('${images[0]}')`;
-
-    // 位置復元
+    // 位置復元（固定点は除く）
     const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
 
-    // ドラッグ可能な点を作成
-    function createDot(x, y, index) {
+    function createMovableDot(x, y, index) {
       const dot = document.createElement('div');
-      dot.className = 'dot';
+      dot.className = 'dot movable-dot';
       dot.dataset.index = index;
-
       dot.style.left = `${x}px`;
       dot.style.top = `${y}px`;
 
@@ -103,7 +107,14 @@
       allDots.push(dot);
     }
 
-    // ドット初期化
+    function createFixedDot(x, y) {
+      const dot = document.createElement('div');
+      dot.className = 'dot fixed-dot';
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
+      container.appendChild(dot);
+    }
+
     function initDots() {
       for (let i = 0; i < dotCount; i++) {
         let x, y;
@@ -115,19 +126,13 @@
           x = centerX + radius * Math.cos(angle) - 15;
           y = centerY + radius * Math.sin(angle) - 15;
         }
-        createDot(x, y, i);
+        createMovableDot(x, y, i);
       }
 
-      // 追加の中央下部ドット（インデックス: 9）
-      let extraX = 300 - 15;
-      let extraY = 395 - 15; // 20px 下へオフセット
-
-      if (savedPositions[9]) {
-        extraX = savedPositions[9].x;
-        extraY = savedPositions[9].y;
-      }
-
-      createDot(extraX, extraY, 9);
+      // 固定点（中央下部）：常にこの位置
+      const fixedX = centerX - 15;
+      const fixedY = 395 - 15; // y方向 +20px オフセット済
+      createFixedDot(fixedX, fixedY);
     }
 
     function savePositions() {
