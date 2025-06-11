@@ -2,25 +2,51 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>画像切り替えと点配置</title>
+  <title>インタラクティブ配置ツール</title>
   <style>
     body {
       margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
       padding: 20px;
       text-align: center;
-      background-color: #f9f9f9;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #controls {
+      margin-bottom: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #5a67d8, #6b46c1);
     }
     #container {
-      position: relative;
       width: 600px;
       height: 600px;
-      margin: 20px auto;
-      border: 2px solid #333;
+      position: relative;
+      border-radius: 12px;
       background-size: cover;
       background-position: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
+      border: 2px solid #ccc;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     }
     .dot {
       width: 30px;
@@ -28,136 +54,133 @@
       border-radius: 50%;
       position: absolute;
       user-select: none;
+      text-align: center;
+      line-height: 30px;
+      font-weight: bold;
+      font-size: 14px;
     }
     .movable-dot {
-      background-color: #007bff;
+      background-color: #3b82f6;
+      color: white;
       cursor: grab;
     }
     .fixed-dot {
-      background-color: #e63946; /* 赤 */
-      cursor: default;
-    }
-    button {
-      padding: 12px 28px;
-      font-size: 16px;
-      background: linear-gradient(135deg, #6c63ff, #3faffa);
+      background-color: #ef4444;
       color: white;
-      border: none;
-      border-radius: 25px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      transition: all 0.3s ease;
-      cursor: pointer;
     }
-    button:hover {
-      background: linear-gradient(135deg, #3faffa, #6c63ff);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    #info {
+      margin-top: 15px;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
 
-  <button onclick="toggleImage()">画像を切り替える</button>
-  <div id="container"></div>
+<header>
+  <h1>インタラクティブ配置ツール</h1>
+</header>
 
-  <script>
-    const container = document.getElementById('container');
-    const images = ['cricket-ground.jpg', 'baller-top.jpg'];
+<div id="controls">
+  <button onclick="toggleImage()">背景画像切り替え</button>
+  <button onclick="resetDots()">初期化</button>
+</div>
 
-    // 現在の画像インデックスを記録・復元
-    let currentImageIndex = parseInt(localStorage.getItem('selectedImage') || '0');
+<div id="container"></div>
+<div id="info">ドットをドラッグして移動できます。中央赤ドットは固定です。</div>
+
+<script>
+  const container = document.getElementById('container');
+  const images = ['cricket-ground.jpg', 'baller-top.jpg'];
+  let currentImageIndex = parseInt(localStorage.getItem('selectedImage') || '0');
+  container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+
+  const dotCount = 9;
+  const centerX = 300, centerY = 300, radius = 200;
+  let allDots = [];
+
+  function toggleImage() {
+    currentImageIndex = (currentImageIndex + 1) % images.length;
     container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+    localStorage.setItem('selectedImage', currentImageIndex);
+  }
 
-    const dotCount = 9;
-    const containerSize = 600;
-    const radius = 200;
-    const centerX = containerSize / 2;
-    const centerY = containerSize / 2;
-    let allDots = [];
+  function createMovableDot(x, y, index) {
+    const dot = document.createElement('div');
+    dot.className = 'dot movable-dot';
+    dot.innerText = index + 1;
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
+    dot.dataset.index = index;
 
-    function toggleImage() {
-      currentImageIndex = (currentImageIndex + 1) % images.length;
-      container.style.backgroundImage = `url('${images[currentImageIndex]}')`;
-      localStorage.setItem('selectedImage', currentImageIndex.toString());
-    }
+    dot.onmousedown = function (e) {
+      const offsetX = e.clientX - dot.offsetLeft;
+      const offsetY = e.clientY - dot.offsetTop;
 
-    const savedPositions = JSON.parse(localStorage.getItem('dotPositions') || '[]');
-
-    function createMovableDot(x, y, index) {
-      const dot = document.createElement('div');
-      dot.className = 'dot movable-dot';
-      dot.dataset.index = index;
-      dot.style.left = `${x}px`;
-      dot.style.top = `${y}px`;
-
-      dot.onmousedown = function (e) {
-        const offsetX = e.clientX - dot.offsetLeft;
-        const offsetY = e.clientY - dot.offsetTop;
-
-        function onMouseMove(e) {
-          let newX = e.clientX - offsetX;
-          let newY = e.clientY - offsetY;
-
-          newX = Math.max(0, Math.min(container.offsetWidth - 30, newX));
-          newY = Math.max(0, Math.min(container.offsetHeight - 30, newY));
-
-          dot.style.left = `${newX}px`;
-          dot.style.top = `${newY}px`;
-        }
-
-        function onMouseUp() {
-          savePositions();
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-      };
-
-      container.appendChild(dot);
-      allDots.push(dot);
-    }
-
-    function createFixedDot(x, y) {
-      const dot = document.createElement('div');
-      dot.className = 'dot fixed-dot';
-      dot.style.left = `${x}px`;
-      dot.style.top = `${y}px`;
-      container.appendChild(dot);
-    }
-
-    function initDots() {
-      for (let i = 0; i < dotCount; i++) {
-        let x, y;
-        if (savedPositions[i]) {
-          x = savedPositions[i].x;
-          y = savedPositions[i].y;
-        } else {
-          const angle = (i / dotCount) * 2 * Math.PI;
-          x = centerX + radius * Math.cos(angle) - 15;
-          y = centerY + radius * Math.sin(angle) - 15;
-        }
-        createMovableDot(x, y, i);
+      function onMouseMove(e) {
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
+        newX = Math.max(0, Math.min(container.offsetWidth - 30, newX));
+        newY = Math.max(0, Math.min(container.offsetHeight - 30, newY));
+        dot.style.left = `${newX}px`;
+        dot.style.top = `${newY}px`;
       }
 
-      // 固定点（中央下部、20px下へ）
-      const fixedX = centerX - 15;
-      const fixedY = 415 - 15;
-      createFixedDot(fixedX, fixedY);
-    }
+      function onMouseUp() {
+        savePositions();
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
 
-    function savePositions() {
-      const positions = allDots.map(dot => ({
-        x: parseFloat(dot.style.left),
-        y: parseFloat(dot.style.top)
-      }));
-      localStorage.setItem('dotPositions', JSON.stringify(positions));
-    }
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
 
-    // 初期化
+    container.appendChild(dot);
+    allDots.push(dot);
+  }
+
+  function createFixedDot(x, y) {
+    const dot = document.createElement('div');
+    dot.className = 'dot fixed-dot';
+    dot.innerText = 'C';
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
+    container.appendChild(dot);
+  }
+
+  function savePositions() {
+    const positions = allDots.map(dot => ({
+      x: parseFloat(dot.style.left),
+      y: parseFloat(dot.style.top)
+    }));
+    localStorage.setItem('dotPositions', JSON.stringify(positions));
+  }
+
+  function loadPositions() {
+    return JSON.parse(localStorage.getItem('dotPositions') || '[]');
+  }
+
+  function initDots() {
+    const saved = loadPositions();
+    allDots.forEach(dot => dot.remove());
+    allDots = [];
+    for (let i = 0; i < dotCount; i++) {
+      const angle = (i / dotCount) * 2 * Math.PI;
+      const x = centerX + radius * Math.cos(angle) - 15;
+      const y = centerY + radius * Math.sin(angle) - 15;
+      const pos = saved[i] || { x, y };
+      createMovableDot(pos.x, pos.y, i);
+    }
+    createFixedDot(centerX - 15, 415 - 15);
+  }
+
+  function resetDots() {
+    localStorage.removeItem('dotPositions');
     initDots();
-  </script>
+  }
+
+  initDots();
+</script>
 
 </body>
 </html>
